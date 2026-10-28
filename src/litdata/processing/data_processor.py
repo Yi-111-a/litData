@@ -1976,7 +1976,7 @@ class DataProcessor:
         # Unordered: one bin per node; workers steal from a shared node queue.
         map_workers = 1 if not self.keep_data_ordered else self.num_workers
 
-        # Local generator: shuffle per ``random_seed`` without touching the caller's global RNG state (#944).
+        # Local generator: shuffle per ``random_seed`` without touching the caller's global RNG state
         rng = np.random.RandomState(self.random_seed)
         if isinstance(user_items, list):
             assert isinstance(user_items, list)
