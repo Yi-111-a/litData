@@ -737,8 +737,8 @@ def _map_items_to_workers_weighted(
         else:
             print(f"{label} {worker_id} gets ({len(worker_items[worker_id])}) items for a total weight of {size}.")
 
-    rng = np.random if rng is None else rng
-    return [rng.permutation(worker_items[worker_id]).tolist() for worker_id in worker_ids_this_node]
+    shuffler = np.random if rng is None else rng
+    return [shuffler.permutation(worker_items[worker_id]).tolist() for worker_id in worker_ids_this_node]
 
 
 def _get_num_bytes(item: Any, base_path: str) -> int:
@@ -1831,7 +1831,8 @@ class DataProcessor:
             delete_cached_files: Whether to delete the cached files.
             fast_dev_run: Whether to run a quick dev run.
             random_seed: Seed for the local generator that shuffles the items assigned to each worker. The global
-                ``random`` / NumPy / torch generators are not touched, so seed those yourself if ``fn`` needs it.
+                ``random`` / NumPy / torch generators are not touched, so seed those yourself if the recipe's
+                ``prepare_structure`` or ``prepare_item`` needs reproducible randomness.
             reorder_files: By default, reorders the files by file size to distribute work equally among all workers.
                 Set this to ``False`` if the order in which samples are processed should be preserved.
             weights: Provide a list of weights associated to the inputs.
@@ -1950,14 +1951,6 @@ class DataProcessor:
             # clean up checkpoints if not using checkpoints
             self._cleanup_checkpoints()
 
-        self._run(data_recipe)
-
-    def _run(self, data_recipe: DataRecipe) -> None:
-        """Do the work of :meth:`run`.
-
-        The only randomness litdata needs is the worker shuffle, which draws from a local generator seeded with
-        ``random_seed``, so the caller's global ``random`` / NumPy / torch (CPU and GPU) state is left alone (#944).
-        """
         t0 = time()
         os.environ["DATA_OPTIMIZER_NUM_WORKERS"] = str(self.num_workers)
         if self.verbose:
@@ -1983,6 +1976,7 @@ class DataProcessor:
         # Unordered: one bin per node; workers steal from a shared node queue.
         map_workers = 1 if not self.keep_data_ordered else self.num_workers
 
+        # Local generator: shuffle per ``random_seed`` without touching the caller's global RNG state (#944).
         rng = np.random.RandomState(self.random_seed)
         if isinstance(user_items, list):
             assert isinstance(user_items, list)
