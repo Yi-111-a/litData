@@ -2700,7 +2700,7 @@ def test_studio_lightning_storage_shared_node_queue(tmpdir):
 
 @pytest.mark.parametrize("seed", [0, 1])
 def test_optimize_preserves_the_callers_random_state(tmpdir, seed):
-    """`optimize` runs in the caller's process, so it must not reseed the caller's generators (#944)."""
+    """`optimize` runs in the caller's process, so it must not reseed the caller's generators."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -2723,7 +2723,7 @@ def test_optimize_preserves_the_callers_random_state(tmpdir, seed):
 
 
 def test_optimize_does_not_seed_the_global_generators(tmpdir, monkeypatch):
-    """Only the worker shuffle needs randomness, and it uses a local generator (#944).
+    """Only the worker shuffle needs randomness, and it uses a local generator.
 
     Seeding torch globally would also queue a seed for CUDA / MPS / XPU, which torch applies lazily on first use, so
     ``optimize`` must not call any of the global seeders.
@@ -2743,7 +2743,7 @@ def test_optimize_does_not_seed_the_global_generators(tmpdir, monkeypatch):
 
 @pytest.mark.parametrize("use_weights", [True, False], ids=["weights", "file_sizes"])
 def test_weighted_shuffle_uses_local_rng(tmpdir, monkeypatch, use_weights):
-    """Both weighted branches shuffle with a local generator seeded by ``random_seed`` (#944)."""
+    """Both weighted branches shuffle with a local generator seeded by ``random_seed``."""
     input_dir = os.path.join(tmpdir, "inputs")
     os.makedirs(input_dir)
     inputs = []
